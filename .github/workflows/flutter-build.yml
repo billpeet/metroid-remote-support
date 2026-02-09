@@ -250,7 +250,7 @@ jobs:
           python3 ./generate.py -f ../../metroid-rs/ -o . -e ../../metroid-rs/metroid-rs.exe
           popd
           mkdir -p ./SignOutput
-          mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/metroid-rs-${{ env.VERSION }}-${{ matrix.job.arch }}.exe
+          mv ./target/release/metroid-rs-portable-packer.exe ./SignOutput/metroid-rs-${{ env.VERSION }}-${{ matrix.job.arch }}.exe
 
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v2
@@ -364,7 +364,7 @@ jobs:
           sed -i 's/branch = "dyn"/branch = "dyn_x86"/g' ./Cargo.toml
           cargo build --features inline,vram,hwcodec --release --bins
           mkdir -p ./Release
-          mv ./target/release/rustdesk.exe ./Release/metroid-rs.exe
+          mv ./target/release/metroid-rs.exe ./Release/metroid-rs.exe
           curl -LJ -o ./Release/sciter.dll https://github.com/c-smile/sciter-sdk/raw/master/bin.win/x32/sciter.dll
           echo "output_folder=./Release" >> $GITHUB_OUTPUT
           curl -LJ -o ./usbmmidd_v2.zip https://github.com/rustdesk-org/rdev/releases/download/usbmmidd_v2/usbmmidd_v2.zip
@@ -414,7 +414,7 @@ jobs:
           python3 ./generate.py -f ../../Release/ -o . -e ../../Release/metroid-rs.exe
           popd
           mkdir -p ./SignOutput
-          mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/metroid-rs-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.exe
+          mv ./target/release/metroid-rs-portable-packer.exe ./SignOutput/metroid-rs-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.exe
 
       - name: Sign metroid-rs self-extracted file
         if: env.UPLOAD_ARTIFACT == 'true' && env.SIGN_BASE_URL != '-2'
@@ -1826,7 +1826,7 @@ jobs:
             cargo build --features inline${{ matrix.job.extra_features }} --release --bins --jobs 1
             # make debian package
             mkdir -p ./Release
-            mv ./target/release/rustdesk ./Release/metroid-rs
+            mv ./target/release/metroid-rs ./Release/metroid-rs
             wget -O ./Release/libsciter-gtk.so https://github.com/c-smile/sciter-sdk/raw/master/bin.lnx/${{ matrix.job.sciter_arch }}/libsciter-gtk.so
             export DEB_ARCH=${{ matrix.job.deb_arch }}
             ./build.py --package ./Release
