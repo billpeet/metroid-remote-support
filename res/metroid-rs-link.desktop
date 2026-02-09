@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Metroid Remote Support
 NoDisplay=true
-MimeType=x-scheme-handler/metroid-rs;
+MimeType=x-scheme-handler/metroid-remote-support;
 TryExec=metroid-rs
 Exec=metroid-rs %u
 Icon=metroid-rs
