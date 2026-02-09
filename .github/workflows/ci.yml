@@ -15,7 +15,7 @@ on:
       - "README.md"
   push:
     branches:
-      - master
+      - metroid-rebrand
     paths-ignore:
       - ".github/**"
       - "docs/**"

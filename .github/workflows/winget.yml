@@ -1,7 +1,7 @@
 name: Publish to WinGet
+
+# Disabled: Requires WinGet package registration for Metroid Remote Support
 on:
-  release:
-    types: [released]
   workflow_dispatch:
 jobs:
   publish:
