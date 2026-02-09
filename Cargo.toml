@@ -1,16 +1,20 @@
 [package]
 name = "rustdesk"
 version = "1.4.5"
-authors = ["rustdesk <info@rustdesk.com>"]
+authors = ["Metroid Electrical Engineering"]
 edition = "2021"
 build= "build.rs"
-description = "RustDesk Remote Desktop"
-default-run = "rustdesk"
+description = "Metroid Remote Support"
+default-run = "metroid-rs"
 rust-version = "1.75"
 
 [lib]
 name = "librustdesk"
 crate-type = ["cdylib", "staticlib", "rlib"]
+
+[[bin]]
+name = "metroid-rs"
+path = "src/main.rs"
 
 [[bin]]
 name = "naming"
@@ -213,10 +217,10 @@ exclude = ["vdi/host", "examples/custom_plugin"]
 libxdo-sys = { path = "libs/libxdo-sys-stub" }
 
 [package.metadata.winres]
-LegalCopyright = "Copyright © 2025 Purslane Ltd. All rights reserved."
-ProductName = "RustDesk"
-FileDescription = "RustDesk Remote Desktop"
-OriginalFilename = "rustdesk.exe"
+LegalCopyright = "Copyright © 2026 Metroid Electrical Engineering. Based on RustDesk, Copyright © 2025 Purslane Ltd."
+ProductName = "Metroid Remote Support"
+FileDescription = "Metroid Remote Support"
+OriginalFilename = "metroid-rs.exe"
 
 [target.'cfg(target_os="windows")'.build-dependencies]
 winres = "0.1"
@@ -232,8 +236,8 @@ hound = "3.5"
 docopt = "1.1"
 
 [package.metadata.bundle]
-name = "RustDesk"
-identifier = "com.carriez.rustdesk"
+name = "Metroid Remote Support"
+identifier = "com.metroid.remotesupport"
 icon = ["res/32x32.png", "res/128x128.png", "res/128x128@2x.png"]
 osx_minimum_system_version = "10.14"
 

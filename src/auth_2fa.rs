@@ -1,3 +1,4 @@
+// Modifications Copyright (C) 2026 Metroid Electrical Engineering
 use hbb_common::{
     anyhow::anyhow,
     bail,
@@ -14,7 +15,7 @@ lazy_static::lazy_static! {
     static ref CURRENT_2FA: Mutex<Option<(TOTPInfo, TOTP)>> = Mutex::new(None);
 }
 
-const ISSUER: &str = "RustDesk";
+const ISSUER: &str = "Metroid Remote Support";
 const TAG_LOGIN: &str = "Connection";
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

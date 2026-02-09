@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Metroid Remote Support
+NoDisplay=true
+MimeType=x-scheme-handler/metroid-rs;
+TryExec=metroid-rs
+Exec=metroid-rs %u
+Icon=metroid-rs
+Terminal=false
+Type=Application
+StartupNotify=false
+StartupWMClass=metroid-rs
