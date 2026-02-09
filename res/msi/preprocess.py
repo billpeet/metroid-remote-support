@@ -153,15 +153,16 @@ def gen_auto_component(exe_name, dist_dir):
     )
 
 
-def gen_pre_vars(args, dist_dir):
+def gen_pre_vars(args, exe_name, dist_dir):
     def func(lines, index_start):
-        upgrade_code = uuid.uuid5(uuid.NAMESPACE_OID, app_name + ".exe")
+        upgrade_code = uuid.uuid5(uuid.NAMESPACE_OID, exe_name + ".exe")
 
         indent = g_indent_unit * 1
         to_insert_lines = [
             f'{indent}<?define Version="{g_version}" ?>\n',
             f'{indent}<?define Manufacturer="{args.manufacturer}" ?>\n',
             f'{indent}<?define Product="{args.app_name}" ?>\n',
+            f'{indent}<?define ProductExe="{exe_name}" ?>\n',
             f'{indent}<?define Description="{args.app_name} Installer" ?>\n',
             f'{indent}<?define ProductLower="{args.app_name.lower()}" ?>\n',
             f'{indent}<?define RegKeyRoot=".$(var.ProductLower)" ?>\n',
@@ -317,7 +318,7 @@ def gen_custom_ARPSYSTEMCOMPONENT_True(args, dist_dir):
             f'{indent}<RegistryValue Type="string" Name="DisplayName" Value="{args.app_name}" />\n'
         )
         lines_new.append(
-            f'{indent}<RegistryValue Type="string" Name="DisplayIcon" Value="[INSTALLFOLDER_INNER]{args.app_name}.exe" />\n'
+            f'{indent}<RegistryValue Type="string" Name="DisplayIcon" Value="[INSTALLFOLDER_INNER]{args.exe_name if args.exe_name else args.app_name}.exe" />\n'
         )
         lines_new.append(
             f'{indent}<RegistryValue Type="string" Name="DisplayVersion" Value="{g_version}" />\n'
@@ -537,7 +538,7 @@ if __name__ == "__main__":
 
     update_license_file(app_name)
 
-    if not gen_pre_vars(args, dist_dir):
+    if not gen_pre_vars(args, exe_name, dist_dir):
         sys.exit(-1)
 
     if app_name != "RustDesk":
