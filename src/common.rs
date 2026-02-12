@@ -100,6 +100,9 @@ lazy_static::lazy_static! {
     static ref PUBLIC_IPV6_ADDR: Arc<Mutex<(Option<SocketAddr>, Option<Instant>)>> = Default::default();
 }
 
+const GITHUB_RELEASE_OWNER: &str = "billpeet";
+const GITHUB_RELEASE_REPO: &str = "metroid-remote-support";
+
 lazy_static::lazy_static! {
     // Is server process, with "--server" args
     static ref IS_SERVER: bool = std::env::args().nth(1) == Some("--server".to_owned());
@@ -941,19 +944,105 @@ pub fn is_modifier(evt: &KeyEvent) -> bool {
 }
 
 pub fn check_software_update() {
-    if is_custom_client() {
-        return;
-    }
     let opt = LocalConfig::get_option(keys::OPTION_ENABLE_CHECK_UPDATE);
     if config::option2bool(keys::OPTION_ENABLE_CHECK_UPDATE, &opt) {
         std::thread::spawn(move || allow_err!(do_check_software_update()));
     }
 }
 
+fn normalize_release_version_tag(tag: &str) -> String {
+    tag.trim_start_matches('v').to_string()
+}
+
+fn github_latest_release_api_url() -> String {
+    format!(
+        "https://api.github.com/repos/{GITHUB_RELEASE_OWNER}/{GITHUB_RELEASE_REPO}/releases/latest"
+    )
+}
+
+fn github_release_page_url(version: &str) -> String {
+    format!(
+        "https://github.com/{GITHUB_RELEASE_OWNER}/{GITHUB_RELEASE_REPO}/releases/tag/{version}"
+    )
+}
+
+async fn check_software_update_from_github() -> hbb_common::ResultType<()> {
+    let url = github_latest_release_api_url();
+    let proxy_conf = Config::get_socks();
+    let tls_url = get_url_for_tls(&url, &proxy_conf);
+    let tls_type = get_cached_tls_type(tls_url);
+    let is_tls_not_cached = tls_type.is_none();
+    let tls_type = tls_type.unwrap_or(TlsType::Rustls);
+    let client = create_http_client_async(tls_type, false);
+    let latest_release_response = match client
+        .get(&url)
+        .header("User-Agent", get_app_name())
+        .header("Accept", "application/vnd.github+json")
+        .send()
+        .await
+    {
+        Ok(resp) => {
+            upsert_tls_cache(tls_url, tls_type, false);
+            resp
+        }
+        Err(err) => {
+            if is_tls_not_cached && err.is_request() {
+                let tls_type = TlsType::NativeTls;
+                let client = create_http_client_async(tls_type, false);
+                let resp = client
+                    .get(&url)
+                    .header("User-Agent", get_app_name())
+                    .header("Accept", "application/vnd.github+json")
+                    .send()
+                    .await?;
+                upsert_tls_cache(tls_url, tls_type, false);
+                resp
+            } else {
+                return Err(err.into());
+            }
+        }
+    };
+    if !latest_release_response.status().is_success() {
+        bail!(
+            "GitHub latest release query failed: {}",
+            latest_release_response.status()
+        );
+    }
+    let bytes = latest_release_response.bytes().await?;
+    let resp: Value = serde_json::from_slice(&bytes)?;
+    let raw_tag = resp
+        .get("tag_name")
+        .and_then(|v| v.as_str())
+        .unwrap_or_default();
+    if raw_tag.is_empty() {
+        bail!("GitHub latest release response missing tag_name");
+    }
+    let latest_release_version = normalize_release_version_tag(raw_tag);
+    let response_url = github_release_page_url(raw_tag);
+
+    if get_version_number(&latest_release_version) > get_version_number(crate::VERSION) {
+        #[cfg(feature = "flutter")]
+        {
+            let mut m = HashMap::new();
+            m.insert("name", "check_software_update_finish");
+            m.insert("url", &response_url);
+            if let Ok(data) = serde_json::to_string(&m) {
+                let _ = crate::flutter::push_global_event(crate::flutter::APP_TYPE_MAIN, data);
+            }
+        }
+        *SOFTWARE_UPDATE_URL.lock().unwrap() = response_url;
+    } else {
+        *SOFTWARE_UPDATE_URL.lock().unwrap() = "".to_string();
+    }
+    Ok(())
+}
+
 // No need to check `danger_accept_invalid_cert` for now.
-// Because the url is always `https://api.rustdesk.com/version/latest`.
 #[tokio::main(flavor = "current_thread")]
 pub async fn do_check_software_update() -> hbb_common::ResultType<()> {
+    if is_custom_client() {
+        return check_software_update_from_github().await;
+    }
     let (request, url) =
         hbb_common::version_check_request(hbb_common::VER_TYPE_RUSTDESK_CLIENT.to_string());
     let proxy_conf = Config::get_socks();

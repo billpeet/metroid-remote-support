@@ -2770,10 +2770,16 @@ pub fn main_get_common(key: String) -> String {
             }
         } else if key.starts_with("download-file-") {
             let _version = key.replace("download-file-", "");
+            let _version = _version.trim_start_matches('v');
+            let _asset_prefix = if crate::is_custom_client() {
+                "metroid-rs"
+            } else {
+                "rustdesk"
+            };
             #[cfg(target_os = "windows")]
             return match crate::platform::windows::is_msi_installed() {
-                Ok(true) => format!("rustdesk-{_version}-x86_64.msi"),
-                Ok(false) => format!("rustdesk-{_version}-x86_64.exe"),
+                Ok(true) => format!("{_asset_prefix}-{_version}-x86_64.msi"),
+                Ok(false) => format!("{_asset_prefix}-{_version}-x86_64.exe"),
                 Err(e) => {
                     log::error!("Failed to check if is msi: {}", e);
                     format!("error:update-failed-check-msi-tip")
@@ -2782,9 +2788,9 @@ pub fn main_get_common(key: String) -> String {
             #[cfg(target_os = "macos")]
             {
                 return if cfg!(target_arch = "x86_64") {
-                    format!("rustdesk-{_version}-x86_64.dmg")
+                    format!("{_asset_prefix}-{_version}-x86_64.dmg")
                 } else if cfg!(target_arch = "aarch64") {
-                    format!("rustdesk-{_version}-aarch64.dmg")
+                    format!("{_asset_prefix}-{_version}-aarch64.dmg")
                 } else {
                     "error:unsupported".to_owned()
                 };

@@ -133,17 +133,29 @@ fn check_update(manually: bool) -> ResultType<()> {
         log::debug!("No update available.");
     } else {
         let download_url = update_url.replace("tag", "download");
-        let version = download_url.split('/').last().unwrap_or_default();
+        let version = download_url
+            .split('/')
+            .last()
+            .unwrap_or_default()
+            .trim_start_matches('v')
+            .to_string();
+        #[cfg(target_os = "windows")]
+        let asset_prefix = if crate::is_custom_client() {
+            "metroid-rs"
+        } else {
+            "rustdesk"
+        };
         #[cfg(target_os = "windows")]
         let download_url = if cfg!(feature = "flutter") {
             format!(
-                "{}/rustdesk-{}-x86_64.{}",
+                "{}/{}-{}-x86_64.{}",
                 download_url,
+                asset_prefix,
                 version,
                 if is_msi { "msi" } else { "exe" }
             )
         } else {
-            format!("{}/rustdesk-{}-x86-sciter.exe", download_url, version)
+            format!("{}/{}-{}-x86-sciter.exe", download_url, asset_prefix, version)
         };
         log::debug!("New version available: {}", &version);
         let client = create_http_client_with_url(&download_url);
