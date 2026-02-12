@@ -1171,20 +1171,68 @@ fn get_subkey(name: &str, wow: bool) -> String {
 }
 
 fn get_valid_subkey() -> String {
-    let subkey = get_subkey(IS1, false);
-    if !get_reg_of(&subkey, "InstallLocation").is_empty() {
-        return subkey;
-    }
-    let subkey = get_subkey(IS1, true);
-    if !get_reg_of(&subkey, "InstallLocation").is_empty() {
-        return subkey;
-    }
     let app_name = crate::get_app_name();
-    let subkey = get_subkey(&app_name, true);
-    if !get_reg_of(&subkey, "InstallLocation").is_empty() {
-        return subkey;
+    let candidates = [
+        get_subkey(IS1, false),
+        get_subkey(IS1, true),
+        get_subkey(&app_name, true),
+        get_subkey(&app_name, false),
+    ];
+
+    // Prefer keys that point to a directory containing an expected executable.
+    for subkey in candidates.iter() {
+        if has_installed_exe_in_subkey(subkey) {
+            return subkey.to_owned();
+        }
     }
-    return get_subkey(&app_name, false);
+
+    // Fallback to the first key that has InstallLocation for compatibility.
+    for subkey in candidates.iter() {
+        if !get_reg_of(subkey, "InstallLocation").is_empty() {
+            return subkey.to_owned();
+        }
+    }
+
+    get_subkey(&app_name, false)
+}
+
+fn candidate_exe_names() -> Vec<String> {
+    let mut names = Vec::new();
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(file_name) = exe.file_name() {
+            names.push(file_name.to_string_lossy().into_owned());
+        }
+    }
+    names.push(format!("{}.exe", crate::get_app_name()));
+    names.push(format!("{}.exe", env!("CARGO_PKG_NAME")));
+    names.sort();
+    names.dedup();
+    names
+}
+
+fn resolve_installed_exe(path: &str) -> String {
+    let trimmed_path = path.trim_end_matches('\\');
+    for exe_name in candidate_exe_names() {
+        let exe_path = format!("{trimmed_path}\\{exe_name}");
+        if std::path::Path::new(&exe_path).exists() {
+            return exe_path;
+        }
+    }
+
+    // Fall back to the current binary name to keep behavior predictable.
+    let fallback = std::env::current_exe()
+        .ok()
+        .and_then(|p| p.file_name().map(|s| s.to_string_lossy().into_owned()))
+        .unwrap_or_else(|| format!("{}.exe", env!("CARGO_PKG_NAME")));
+    format!("{trimmed_path}\\{fallback}")
+}
+
+fn has_installed_exe_in_subkey(subkey: &str) -> bool {
+    let path = get_reg_of(subkey, "InstallLocation");
+    if path.is_empty() {
+        return false;
+    }
+    std::path::Path::new(&resolve_installed_exe(&path)).exists()
 }
 
 // Return install options other than InstallLocation.
@@ -1297,7 +1345,7 @@ fn get_install_info_with_subkey(subkey: String) -> (String, String, String, Stri
         "%ProgramData%\\Microsoft\\Windows\\Start Menu\\Programs\\{}",
         crate::get_app_name()
     );
-    let exe = format!("{}\\{}.exe", path, crate::get_app_name());
+    let exe = resolve_installed_exe(&path);
     (subkey, path, start_menu, exe)
 }
 

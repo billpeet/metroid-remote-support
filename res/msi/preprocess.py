@@ -76,7 +76,7 @@ def make_parser():
         "--app-name", type=str, default="Metroid Remote Support", help="The app name."
     )
     parser.add_argument(
-        "--exe-name", type=str, default="", help="The exe filename (without .exe). Defaults to app-name if not set."
+        "--exe-name", type=str, default="metroid-rs", help="The exe filename (without .exe). Defaults to metroid-rs if not set."
     )
     parser.add_argument(
         "-v", "--version", type=str, default="", help="The app version."
@@ -527,7 +527,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     app_name = args.app_name
-    exe_name = args.exe_name if args.exe_name else app_name
+    exe_name = args.exe_name if args.exe_name else "metroid-rs"
     dist_dir = Path(sys.argv[0]).parent.joinpath(args.dist_dir).resolve()
 
     if not prepare_resources():

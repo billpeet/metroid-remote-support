@@ -2958,7 +2958,8 @@ int versionCmp(String v1, String v2) {
 }
 
 String getWindowName({WindowType? overrideType}) {
-  final name = bind.mainGetAppNameSync();
+  final appName = bind.mainGetAppNameSync().trim();
+  final name = appName.isEmpty ? "Metroid Remote Support" : appName;
   switch (overrideType ?? kWindowType) {
     case WindowType.Main:
       return name;
@@ -3695,14 +3696,11 @@ Widget loadLogo() {
 }
 
 Widget loadIcon(double size) {
-  return Image.asset('assets/icon.png',
-      width: size,
-      height: size,
-      errorBuilder: (ctx, error, stackTrace) => SvgPicture.asset(
-            'assets/icon.svg',
-            width: size,
-            height: size,
-          ));
+  return Image.asset(
+    'assets/icon.png',
+    width: size,
+    height: size,
+  );
 }
 
 var imcomingOnlyHomeSize = Size(280, 300);
