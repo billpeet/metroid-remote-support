@@ -771,6 +771,7 @@ jobs:
             metroid-rs*-${{ matrix.job.arch }}.dmg
 
   publish_unsigned:
+    if: ${{ inputs.upload-artifact }}
     needs:
       - build-for-windows-flutter
     runs-on: ubuntu-latest
